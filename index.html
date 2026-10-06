@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Novel Interaktif Fullscreen</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* 1. CSS RESET & SETUP FULLSCREEN TANPA SCROLL BAR UTAMA */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent; /* Hapus warna highlight tap di HP */
+    }
+
+    html, body {
+      width: 100%;
+      /* Menggunakan dynamic dvh agar pas saat address bar browser HP muncul/hilang */
+      height: 100dvh; 
+      overflow: hidden; /* Mencegah seluruh halaman di-scroll */
+      background-color: #1a1625;
+      font-family: 'Poppins', sans-serif;
+      color: #f0e6ed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 2. CONTAINER UTAMA PAS LAYAR HP */
+    .game-container {
+      width: 100%;
+      height: 100%; /* Full height dari body (100dvh) */
+      max-width: 500px; /* Batasan lebar untuk tampilan desktop agar tidak terlalu melar */
+      background: #231d30;
+      display: flex;
+      flex-direction: column; /* Susun elemen vertikal: Atas -> Bawah */
+      position: relative;
+      overflow: hidden; /* Jaga konten tetap di dalam */
+    }
+
+    /* 3. HEADER (STAY DI ATAS) */
+    .status-bar {
+      flex: 0 0 auto; /* Jangan tumbuh, jangan menyusut */
+      padding: env(safe-area-inset-top) 15px 10px 15px; /* Support notch HP baru */
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid #3d2f4a;
+      font-size: 0.9rem;
+      color: #ff9ebb;
+      display: flex;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    /* 4. AREA GAMBAR (ADAPTIF) */
+    .scene-image-box {
+      flex: 0 0 35%; /* Ambil 35% tinggi layar tetap */
+      width: 100%;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+    }
+
+    .scene-image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Gambar menutupi area tanpa distorsi */
+    }
+
+    /* 5. AREA DIALOG & PILIHAN (BISA DI-SCROLL JIKA PANJANG) */
+    .content-area {
+      flex: 1 1 auto; /* Ambil sisa tinggi layar yang tersedia */
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto; /* JIKA TULISAN PANJANG, SCROLL MUNCUL DI SINI */
+      padding: 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom)); /* Support home bar HP */
+      gap: 20px;
+      /* Scrollbar halus untuk mobile */
+      -webkit-overflow-scrolling: touch; 
+    }
+
+    /* Styling Teks Narasi */
+    .story-box {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      line-height: 1.6;
+      color: #f5ebf2;
+      /* Pastikan kata panjang tidak memecah layout */
+      word-wrap: break-word; 
+      overflow-wrap: break-word;
+    }
+
+    /* Area Tombol Pilihan */
+    .choices-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: auto; /* Dorong pilihan ke bawah area konten jika teks pendek */
+    }
+
+    .btn-choice {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      padding: 15px;
+      background: #2d243a;
+      color: #e6b8cb;
+      border: 1px solid #ff9ebb;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s;
+      width: 100%; /* Pastikan tombol tidak melebar keluar */
+    }
+
+    .btn-choice:active {
+      background: #ff9ebb;
+      color: #1a1625;
+    }
+
+    /* Menghilangkan scrollbar biar estetik tapi tetap bisa di-scroll */
+    .content-area::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <!-- ATAS -->
+    <div class="status-bar">
+      <span>Bab 1: Pertemuan</span>
+      <span>❤️ 0%</span>
+    </div>
+
+    <!-- TENGAH -->
+    <div class="scene-image-box">
+      <img src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=600" alt="Kafe">
+    </div>
+
+    <!-- BAWAH (SCROLLABLE AREA) -->
+    <div class="content-area">
+      <div class="story-box" id="storyText">
+        Memuat cerita... Jika teks ini sangat panjang, dia akan bisa di-scroll ke bawah di dalam area ini, tanpa membuat gambar di atas hilang atau tombol di bawah tertutup. Coba bayangkan narasi yang sangat mendetail mengenai aroma kopi dan rintik hujan yang tak kunjung usai di sore yang dingin itu.
+      </div>
+
+      <div class="choices-box" id="choicesContainer">
+        <!-- Tombol dimunculkan di sini -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data Cerita Singkat untuk Testing
+    const storyData = {
+      start: {
+        text: "Aroma kopi Arabika menyeruak. Kamu sibuk dengan laptopmu. Tiba-tiba pintu kafe terbuka. Seorang gadis dengan jaket denim basah masuk membawa buku sketsa besar. Dia mendekat ke mejamu.\n\n'Permisi... boleh saya duduk di sini? Tempat lain penuh,' tanyanya.",
+        choices: [
+          { text: "Silakan, duduk saja.", target: "end" },
+          { text: "Maaf, saya sedang menunggu teman.", target: "end" }
+        ]
+      },
+      end: {
+        text: "Terima kasih sudah mencoba demo layout fullscreen ini.",
+        choices: [
+          { text: "Ulangi", target: "start" }
+        ]
+      }
+    };
+
+    function renderNode(nodeId) {
+      const node = storyData[nodeId];
+      const textEl = document.getElementById('storyText');
+      const containerEl = document.getElementById('choicesContainer');
+
+      textEl.innerText = node.text;
+      containerEl.innerHTML = '';
+
+      node.choices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-choice';
+        btn.innerText = choice.text;
+        btn.onclick = () => renderNode(choice.target);
+        containerEl.appendChild(btn);
+      });
+
+      // Auto-scroll kembali ke atas area teks setiap ganti cerita
+      document.querySelector('.content-area').scrollTop = 0;
+    }
+
+    renderNode('start');
+  </script>
+</body>
+</html>
